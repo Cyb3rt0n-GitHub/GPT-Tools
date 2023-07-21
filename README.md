@@ -5,6 +5,20 @@ Below is the detailed description for the Python SecureScanBot script:
     Purpose:
     The script is designed to perform SSL scans and fetch DNS records and MTA-STS (Mail Transfer Agent Strict Transport Security) records for a list of domains specified in the domains.txt file. Additionally, the script generates recommendations for improving SSL scan results and DNS records using the GPT-3.5 Turbo API provided by OpenAI.
 
+    The provided Python script requires two external dependencies: sslscan and aha.
+
+    sslscan:
+    sslscan is an external command-line tool used for performing SSL scans on domains. It helps identify SSL/TLS vulnerabilities and cipher suites supported by a server. The script calls sslscan using the subprocess module to perform the SSL scans. To use sslscan, you need to have it installed and accessible in your system's PATH. You can find more information and download the tool from its official website or the respective package manager for your operating system.
+        Official website: https://github.com/rbsec/sslscan
+
+    aha:
+    aha is another external command-line tool used for converting text-based ANSI color output to HTML. In the script, it is used to convert the SSL scan results to an HTML report. Similar to sslscan, you need to have aha installed and accessible in your system's PATH. You can find more information and download the tool from its official website or the respective package manager for your operating system.
+        Official website: https://github.com/theZiz/aha
+
+Before running the Python script, make sure both sslscan and aha are installed and accessible from the command line. You can verify their availability by opening a terminal or command prompt and typing sslscan --version and aha --version. If the commands are recognized, you are good to go.
+
+If you have any trouble installing or using sslscan or aha, refer to their respective documentation or seek help from your system administrator or online resources.
+
     Setup:
         Before running the script, ensure you have Python installed on your computer.
         Replace "INSERT_API_KEY_HERE" with your actual GPT-3.5 API key in the api_key variable.
