@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+domains.txt
+domains_new.txt
+domain_results.*
+sslscan_results.*
+results.json
+scan-*/
+sslscan-output-*/

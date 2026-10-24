@@ -1,54 +1,67 @@
-# GPT-Tools
+# GPT-Tools — legacy domain scanner
 
-Below is the detailed description for the Python SecureScanBot script:
+Early personal experiments by Cyb3rt0n, originally written in 2023. These public scripts are **separate from the current enterprise SecureScanBot project**, and are not an enterprise assurance platform. They collect TLS and email DNS evidence for domains you are authorised to assess.
 
-    Purpose:
-    The script is designed to perform SSL scans and fetch DNS records and MTA-STS (Mail Transfer Agent Strict Transport Security) records for a list of domains specified in the domains.txt file. Additionally, the script generates recommendations for improving SSL scan results and DNS records using the GPT-3.5 Turbo API provided by OpenAI.
+## Python version
 
-    The provided Python script requires two external dependencies: sslscan and aha.
+Requires Python 3.10+, `sslscan` on PATH and the third-party packages in `requirements.txt`. `aha` is no longer required: HTML is generated with escaped evidence.
 
-    sslscan:
-    sslscan is an external command-line tool used for performing SSL scans on domains. It helps identify SSL/TLS vulnerabilities and cipher suites supported by a server. The script calls sslscan using the subprocess module to perform the SSL scans. To use sslscan, you need to have it installed and accessible in your system's PATH. You can find more information and download the tool from its official website or the respective package manager for your operating system.
-        Official website: https://github.com/rbsec/sslscan
+```bash
+sudo apt install sslscan
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements.txt
+```
 
-    aha:
-    aha is another external command-line tool used for converting text-based ANSI color output to HTML. In the script, it is used to convert the SSL scan results to an HTML report. Similar to sslscan, you need to have aha installed and accessible in your system's PATH. You can find more information and download the tool from its official website or the respective package manager for your operating system.
-        Official website: https://github.com/theZiz/aha
+Create `domains.txt` containing one hostname per line, for example `example.org`. Blank lines, `#` comments and duplicates are ignored. URLs, ports and command-line options are rejected.
 
-Before running the Python script, make sure both sslscan and aha are installed and accessible from the command line. You can verify their availability by opening a terminal or command prompt and typing sslscan --version and aha --version. If the commands are recognized, you are good to go.
+```bash
+python legacy_domain_scanner.py domains.txt
+# Choose a new report directory:
+python legacy_domain_scanner.py domains.txt --output-dir my-results
+```
 
-If you have any trouble installing or using sslscan or aha, refer to their respective documentation or seek help from your system administrator or online resources.
+Each run creates a new directory and refuses existing destinations. It contains `results.json`, `domain_results.txt`, `domain_results.html` and `sslscan_results.txt`. Each domain retains its own TLS/DNS evidence, timestamp, errors and commentary. Reports are updated after each completed domain. TLS scans time out after 120 seconds; DNS queries after five seconds. Failed TLS scans do not suppress DNS evidence or subsequent domains. Exit status is nonzero for collection errors or requested AI failures.
 
-    Setup:
-        Before running the script, ensure you have Python installed on your computer.
-        Replace "INSERT_API_KEY_HERE" with your actual GPT-3.5 API key in the api_key variable.
-        Create an input file named domains.txt in the same directory as the script. Add the list of domains you want to scan, with each domain on a separate line.
+### Optional AI commentary
 
-    Dependencies:
-        The script uses the subprocess, dns.resolver, and requests modules from Python's standard library.
-        The aha command-line tool is used for converting the SSL scan results to HTML. Ensure it is installed and accessible in your environment.
+**Off by default.** The normal scan does not contact OpenAI or incur API charges. To opt in, set `OPENAI_API_KEY` securely in your environment, choose a Chat Completions-compatible model available to your account, and run:
 
-    Functions:
-        truncate_text(text, token_limit): A helper function to truncate text to fit within the GPT-3.5 API token limit of 4096 tokens.
-        split_text_into_chunks(text, chunk_size): A helper function to split text into chunks, but it is not currently used in the main script.
-        perform_ssl_scan(domain): Function to perform SSL scans using the external sslscan tool. The scan results are returned as a string.
-        fetch_dns_and_mta_sts_records(domain): Function to fetch DNS records and MTA-STS records for a domain. The DNS records are queried using the dns.resolver module.
-        generate_sslscan_recommendations(ssl_scan_results): Function to generate SSL scan recommendations using the GPT-3.5 Turbo API. It sends the SSL scan results as input to the API and receives the generated recommendations.
+```bash
+python legacy_domain_scanner.py domains.txt --ai --model YOUR_MODEL_ID
+```
 
-    Banner:
-    The script starts with an ASCII art banner displaying "SecureScanBot" and some creative text. This is for aesthetic purposes and can be customized as needed.
+Alternatively set `OPENAI_MODEL`. Never put real keys in source files, reports or commits. Opting in sends each domain's DNS and TLS evidence to OpenAI and incurs API usage. Input has a 24,000-character bound (not a token guarantee); evidence is retained in full locally. API errors are recorded without dumping response bodies. AI output is unverified commentary, not findings or instructions to execute. The Go version does not implement AI calls.
 
-    Main Execution:
-    The script starts by reading the list of domains from the domains.txt file and stores them in the domains variable.
+API reference: [OpenAI Chat Completions](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create).
 
-    It then performs SSL scans for each domain in the list, writes the scan results to the sslscan_results.txt file, and converts the scan results to an HTML file named sslscan_results.html using the aha command.
+## Go version
 
-    For each domain, it queries DNS records and MTA-STS records and writes the results to the domain_results.txt file. It also generates recommendations for DNS records using the GPT-3.5 API and saves them to the output file.
+Requires Go 1.22+ and `sslscan`. No third-party Go packages or API key are needed.
 
-    Additionally, it generates recommendations for SSL scan results using the GPT-3.5 API and appends the HTML content for SSL scan results to the domain_results.html file.
+```bash
+go test ./...
+go run legacy_domain_scanner.go
+# Optional new output directory (input remains domains.txt):
+go run legacy_domain_scanner.go my-go-results
+```
 
-    Disclaimer:
-    The script adds a disclaimer to the domain_results.html file, indicating that the observations and recommendations are generated by OpenAI and may not be accurate, so they should be reviewed by someone knowledgeable in the field.
+Runs sequentially to bound scanner load. Writes raw TLS evidence, DNS text and escaped HTML into a new directory. AI commentary is explicitly marked unimplemented. A failed scan is preserved and the final exit status is nonzero. DNS query failures are recorded as unknown in the report.
 
-    Usage:
-    To use the script, follow the instructions mentioned earlier. Execute the script in the terminal or command prompt, and it will process the domains, perform the scans, fetch DNS records, generate recommendations, and create the final HTML report.
+## Interpretation limits
+
+- Matching TXT records indicate presence, not valid policy or effective protection.
+- Only `default._domainkey` is checked for DKIM. Other selectors may exist; empty results do not prove DKIM is disabled.
+- MTA-STS checks only the DNS advertisement; no HTTPS policy or mail enforcement validation is performed.
+- DNS timeouts and resolver failures are unknowns, not evidence of absent controls.
+- TLS scans target the hostname's default endpoint; they do not assess all ports, SMTP STARTTLS or every backend.
+- Review output before publishing it. Public source does not mean collected target evidence should be public.
+
+## Regression checks
+
+```bash
+python -m unittest discover -s tests -v
+go test ./...
+```
+
+Tests use synthetic data and mocked external services. No real target scans or paid AI calls are required.
