@@ -1,3 +1,0 @@
-# Copy to domains.txt (or domains_new.txt for the shell tool).
-# Replace with hostnames in your authorised scope before running.
-example.org
