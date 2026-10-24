@@ -1,6 +1,6 @@
 # GPT-Tools — legacy domain scanner
 
-Early personal experiments by Cyb3rt0n, originally written in 2023. These public scripts are **separate from the current enterprise SecureScanBot project**, and are not an enterprise assurance platform. They collect TLS and email DNS evidence for domains you are authorised to assess.
+Early personal experiments by Cyb3rt0n, originally written in 2023. These standalone public prototypes collect evidence; they are not an enterprise assurance platform. They collect TLS and email DNS evidence for domains you are authorised to assess.
 
 ## Python version
 
